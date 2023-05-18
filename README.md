@@ -13,6 +13,7 @@ Don't change folder structure even if some types of files do not need to be plac
 
 # Usage
 The CLI usage of the program is really not that complicated at all. You should understand it in no time by looking at the help message. Just run ```bash python ./main.py```
+But here's the most basic usage of the most important function of the program: ```bash python ./main.py aisummsrt ./transcriptions/invideo.srt lilo 28 ./invideo.mp4 finaloutput.mp4```
 
 For more advanced usage, head to the configuration file (fav2ucc.config.ini) and mess around a little with it.
 
