@@ -5,6 +5,7 @@ Yeah, it is finally here! Still under development, but at least it is. The usage
 To use the program make sure that you have:
 - [koboldcpp](https://github.com/LostRuins/koboldcpp) and of course the model. I recommend [Vicuna 7B](https://huggingface.co/eachadea/ggml-vicuna-7b-1.1) or [WizardLM 7B](https://huggingface.co/TheBloke/WizardLM-7B-uncensored-GGML) the most.
 - Python 3.6 at least (I suppose)
+- ffmpeg
 
 When it comes to video files, when it comes to downloading file from your desired platform of choice, it is the best to use [yt-dlp](https://github.com/yt-dlp/yt-dlp).
 For .srt subtitles, it easiest to just grab YouTube subtitles from the video of course. But of course not all will have them. In that case, use [OpenAI's Whisper](https://github.com/openai/whisper) or [this port to .cpp](https://github.com/ggerganov/whisper.cpp) for CPU usage ;) Put the .srt transcription in the "transcriptions" folder of course.
