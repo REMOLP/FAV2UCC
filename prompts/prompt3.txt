@@ -1,0 +1,24 @@
+Task: Given a portion of text from a transcribed video, highlight the most humorous or hilarious moments while keeping additional context ONLY when necessary. The highlighted portion of text should be 1:1 with the original transcription, and should be concise.
+
+Inputs:
+- A portion of text from a transcribed video
+
+Outputs:
+- A list of highlighted moments, where each moment includes:
+  - The highlighted text
+  - A brief explanation of why it's interesting or funny
+- The output should end with an "END" token to indicate the end of the response.
+
+Constraints:
+- Do not replace any instances of "[swear]" in the input text. Do not replace it with the actual swear word.
+
+Example input:
+"I was walking down the street and I saw a guy with a parrot on his shoulder. The parrot started talking to me and said 'Hey, you're [censored]!' I couldn't believe it. Then the guy said 'Sorry, he only speaks the truth'."
+
+Example output:
+1. "The parrot started talking to me and said 'Hey, you're [censored]!'" - Insult from a parrot.
+2. "Sorry, he only speaks the truth" - Owner excuses parrot's insult.
+END
+
+Input: "{yourTextHere}"
+Output:
