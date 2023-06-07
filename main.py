@@ -9,7 +9,8 @@ def helpText():
     print("extractsrt <inputfile> <nindexes> - extract only few segments from the .srt file and return it.")
     print("refinesrt <inputfile> <outputfile> - refine YouTube auto-generated subtitles (changing the [ __ ] to other kind of string for better LLM compatibility).")
     print("mergesrtfull <inputfolder> - merge x amount of .srt files into one, consecutive file. File syntax in the docs.")
-    print("aisummsrt <inputfile> <algotype (rng, lilo, lilofull)> <nindexes> <inputvideofile> <outputvideofile> - speaks for itself, let AI cook.\n")
+    print("aisummsrt <inputfile> <algotype (rng, lilo, lilofull)> <nindexes> <inputvideofile> <outputvideofile> - speaks for itself, let AI cook.")
+    print("stdsummsrt <inputfile> <inputvideofile> <outputvideofile> - performs video summarization based on user-specified words or sentences.\n")
 
 if __name__ == "__main__":
     cliArgs = sys.argv
@@ -258,9 +259,85 @@ if __name__ == "__main__":
                 os.remove(os.path.join(TEMP_VIDS_FOLDER+"/", filename))
     elif cliArgs[1] == "stdsummsrt":
           # TODO:
-          # - remove unnecessary code sections regarding specifically using LLMs
+          # DONE - remove unnecessary code sections regarding specifically using LLMs
           # - stssummsrt will work always in LILO Full mode regardless what so no need for additional algorithm CLI argument
-          # - it will parse what kind of words (or sentences) it needs to look up to from .ini configuration file.
+          # DONE - it will parse what kind of words (or sentences) it needs to look up to from .ini configuration file.
           # The words or sentences will be in "General" section in variable named "std_quotes_to_look_for". Separated by a ',' character.
+          # - for now just one iteration for testing purposes. Choosing index from .srt manually
+          # - fix some weird offset issues regarding word starting and ending timestamp. It shouldn't happen at all in theory.
+          # Manual additional offset needed probably? We will see.
           import random
           from time import sleep
+
+          tempVidsList = []
+          globalIter = 0
+      
+          # Retrieve the input file, input video file, and output video file from command-line arguments
+          if len(cliArgs) < 5:
+              print("Error: Missing arguments. Usage: stdsummsrt <inputfile> <inputvideofile> <outputvideofile>")
+              sys.exit(1)
+      
+          inputFile = cliArgs[2]
+          inputVideoFile = cliArgs[3]
+          outputVideoFile = cliArgs[4]
+      
+          srtLastIndex = getSrtSubs(inputFile, 1, 1)[0]
+          srtSubsObj = getSrtSubs(inputFile, 324, 1)[1]
+          srtSubsObjLastTS = srtSubsObj[-1][2]
+          # Read user-specified words or sentences from the .ini configuration file
+          std_quotes_to_look_for = []
+          try:
+              std_quotes_to_look_for = loadedIniFile["General"]["std_quotes_to_look_for"].split(",")
+          except Exception as e:
+              print("Error reading configuration file:", str(e))
+              sys.exit(1)
+      
+          # Perform video summarization based on user-specified words or sentences
+          wordPerTimestamp = convert_to_timestamps(srtSubsObj)
+          wordPerTimestamp[0].append(srtSubsObjLastTS)
+          print("Performing video summarization based on user-specified words or sentences...")
+          # sleep(random.randint(2, 5))  # Simulating processing time
+          print(f"{srtSubsObj}\n{srtSubsObjLastTS}\n{srtLastIndex}")
+          chunkOfTextFromSRT = " ".join(wordPerTimestamp[1])
+          print(f"{chunkOfTextFromSRT}")
+          chunkOfTextFromSRT = chunkOfTextFromSRT.lower()
+          chunkOfTextFromSRT = noDiacriticSigns(chunkOfTextFromSRT)
+          print(f"chunkOfTextFromSRT after normalizations: {chunkOfTextFromSRT}")
+
+
+          # Now need to find if the certain word exists
+          print(f"std_quotes_to_look_for = {std_quotes_to_look_for}")
+          for i in range(len(std_quotes_to_look_for)):
+              searchedTextStartingIndex = textStartIndex(chunkOfTextFromSRT, std_quotes_to_look_for[i])
+              if searchedTextStartingIndex == -1:
+                  continue
+                  
+              nSpaceChars = howManySpacesUntilIndex(noDiacriticSigns(chunkOfTextFromSRT), searchedTextStartingIndex)
+              print(f"Spaces until index: {nSpaceChars}")
+              nSpaceCharsSuffix = howManySpaces(std_quotes_to_look_for[i])
+              print(f"Spaces in suffix returned string: {nSpaceCharsSuffix}")
+
+              # Trimming the videos here pog :D
+              # Add your code logic here to process the video and generate the summary based on std_quotes_to_look_for
+
+              clipStartingTS = wordPerTimestamp[0][nSpaceChars]
+              clipEndingTS = wordPerTimestamp[0][nSpaceChars+nSpaceCharsSuffix+1]
+              print(f"clipStartingTS = {clipStartingTS}\tclipEndingTS = {clipEndingTS}")
+
+              # if clipN == 0:
+                  # trimInputClipv3_2(inputVideoFile, "srt__tempvid"+str(i)+"-"+str(globalIter)+".mp4", clipStartingTS, clipEndingTS, True)
+              # else:
+              trimInputClipv3_2(inputVideoFile, "srt__tempvid"+str(i)+"-"+str(globalIter)+".mp4", clipStartingTS, clipEndingTS)
+              # tempVidsList.append(TEMP_VIDS_FOLDER+"/srt__tempvid"+str(i)+"-"+str(globalIter)+".mp4")
+              tempVidsList.append("srt__tempvid"+str(i)+"-"+str(globalIter)+".mp4")
+              
+              globalIter += 1
+              # liloCounter += int(cliArgs[4])
+              sleep(1)
+      
+      
+          # Save the output video file
+          print("Saving the output video file:", outputVideoFile)
+          # sleep(random.randint(2, 5))  # Simulating saving time
+      
+          print("Video summarization completed!")
