@@ -218,6 +218,35 @@ def convert_to_timestamps(subs):
     return [timestamps, words]
 
 
+# Function to help offset final clipStartingTS and clipEndingTS variables.
+def convertAndAdjustTimestamps(timestamp1, timestamp2, starting_offset_ms, ending_offset_ms=None):
+    from datetime import datetime, timedelta
+    # Convert the timestamps to datetime objects
+    dt1 = datetime.strptime(timestamp1, "%H:%M:%S.%f")
+    dt2 = datetime.strptime(timestamp2, "%H:%M:%S.%f")
+
+    # Convert the starting offset to a timedelta object
+    starting_offset = timedelta(milliseconds=starting_offset_ms)
+
+    # Add the starting offset to the starting timestamp
+    dt1 += starting_offset
+
+    # If ending_offset_ms is not provided, use the same offset as the starting offset
+    if ending_offset_ms is None:
+        ending_offset_ms = starting_offset_ms
+
+    # Convert the ending offset to a timedelta object
+    ending_offset = timedelta(milliseconds=ending_offset_ms)
+
+    # Add the ending offset to the ending timestamp
+    dt2 += ending_offset
+
+    # Convert the timestamps back to the desired format
+    adjusted_timestamp1 = dt1.strftime("%H:%M:%S.%f")[:-3]
+    adjusted_timestamp2 = dt2.strftime("%H:%M:%S.%f")[:-3]
+
+    return adjusted_timestamp1, adjusted_timestamp2
+
 def stringSimilarity(s1, s2):
     import editdistance
     
