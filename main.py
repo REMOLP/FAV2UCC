@@ -256,3 +256,11 @@ if __name__ == "__main__":
         for filename in os.listdir(TEMP_VIDS_FOLDER):
             if filename.endswith(file_extension):
                 os.remove(os.path.join(TEMP_VIDS_FOLDER+"/", filename))
+    elif cliArgs[1] == "stdsummsrt":
+          # TODO:
+          # - remove unnecessary code sections regarding specifically using LLMs
+          # - stssummsrt will work always in LILO Full mode regardless what so no need for additional algorithm CLI argument
+          # - it will parse what kind of words (or sentences) it needs to look up to from .ini configuration file.
+          # The words or sentences will be in "General" section in variable named "std_quotes_to_look_for". Separated by a ',' character.
+          import random
+          from time import sleep
