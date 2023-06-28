@@ -282,7 +282,7 @@ if __name__ == "__main__":
           outputVideoFile = cliArgs[4]
       
           srtLastIndex = getSrtSubs(inputFile, 1, 1)[0]
-          srtSubsObj = getSrtSubs(inputFile, 324, 1)[1]
+          srtSubsObj = getSrtSubs(inputFile, 946, 1)[1]
           srtSubsObjLastTS = srtSubsObj[-1][2]
           # Read user-specified words or sentences from the .ini configuration file
           std_quotes_to_look_for = []
@@ -322,6 +322,8 @@ if __name__ == "__main__":
 
               clipStartingTS = wordPerTimestamp[0][nSpaceChars]
               clipEndingTS = wordPerTimestamp[0][nSpaceChars+nSpaceCharsSuffix+1]
+              uniTSOffset = 250
+              clipStartingTS, clipEndingTS = convertAndAdjustTimestamps(clipStartingTS, clipEndingTS, uniTSOffset, int((uniTSOffset*2+uniTSOffset*1/3))) # Working meh, but will leave it
               print(f"clipStartingTS = {clipStartingTS}\tclipEndingTS = {clipEndingTS}")
 
               # if clipN == 0:
