@@ -113,6 +113,19 @@ def trimInputClipv3_2(inFile, outFile="SRT__OUT.mp4", startTime="00:00:00.000", 
     else:
         subprocess.call("ffmpeg -hide_banner -loglevel error -stats -ss {} -i {} -to {} -shortest -c:v libx264 -crf 1 -c:a aac {}/{}".format(startTime, inFile, howLongClip, TEMP_VIDS_FOLDER, outFile))
 
+def trimInputClipv3_3(inFile, outFile="SRT__OUT.mp4", startTime="00:00:00.000", endTime="00:00:21.000", firstClip=False):
+    import subprocess
+    howLongClip = subtractTimestampsPrecise(startTime, endTime)
+
+    inFileUni = inFile.replace("./", "")
+    inFileUni = inFileUni.replace(".\\", "")
+    inFileUni = inFileUni.split(".")[0]
+
+    if firstClip:
+        subprocess.call("ffmpeg -hide_banner -loglevel error -stats -ss {} -i {} -to {} -shortest -c:v copy -crf 1 -c:a copy {}/{}".format(startTime, inFile, howLongClip, TEMP_VIDS_FOLDER, outFile))
+    else:
+        subprocess.call("ffmpeg -hide_banner -loglevel error -stats -ss {} -i {} -to {} -shortest -c:v copy -crf 1 -c:a copy {}/{}".format(startTime, inFile, howLongClip, TEMP_VIDS_FOLDER, outFile))
+
 # Function below was used before, but now it is not at all. Keeping it just in case.
 # def concatTrimmedInputsv2(videoFinalOut="MVPY__FAV2UCC.mp4", inFiles=[]):
     # if len(inFiles) <= 0:
@@ -340,3 +353,22 @@ def mergeSrtFiles(directory):
     # Save the merged subtitles to a new file
     # merged_subs.save(os.path.join(directory, 'merged_subs.srt'))
     # pass
+
+# def jsonTSSecToUni(seconds):
+    # seconds = int(seconds)  # Convert to integer
+    # milliseconds = int((seconds % 1) * 1000)  # Extract milliseconds
+# 
+    # hours = seconds // 3600
+    # minutes = (seconds % 3600) // 60
+    # seconds = seconds % 60
+# 
+    # # Format the duration as a string in the desired format
+    # return f"{hours:02d}:{minutes:02d}:{seconds:02d}.{milliseconds:03d}"
+
+def jsonTSSecToUni(timestamp):
+    hours = int(timestamp // 3600)
+    minutes = int((timestamp % 3600) // 60)
+    seconds = int(timestamp % 60)
+    milliseconds = int((timestamp % 1) * 1000)
+
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}.{milliseconds:03d}"

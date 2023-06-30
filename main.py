@@ -10,7 +10,109 @@ def helpText():
     print("refinesrt <inputfile> <outputfile> - refine YouTube auto-generated subtitles (changing the [ __ ] to other kind of string for better LLM compatibility).")
     print("mergesrtfull <inputfolder> - merge x amount of .srt files into one, consecutive file. File syntax in the docs.")
     print("aisummsrt <inputfile> <algotype (rng, lilo, lilofull)> <nindexes> <inputvideofile> <outputvideofile> - speaks for itself, let AI cook.")
-    print("stdsummsrt <inputfile> <inputvideofile> <outputvideofile> - performs video summarization based on user-specified words or sentences.\n")
+    print("stdsummsrt <inputfile> <inputvideofile> <outputvideofile> - performs video summarization based on user-specified words or sentences.")
+    print("stdsummjson <inputfile> <inputvideofile> <outputvideofile> - performs video summarization based on user-specified words or sentences. Takes Whisper's JSON output file instead.\n")
+
+def main__stdsummjson(cliArgs):
+    print("TEST!!!")
+    inputFile = cliArgs[2]
+    inputVideoFile = cliArgs[3]
+    outputVideoFile = cliArgs[4]
+
+    print(inputFile)
+
+    import json
+    
+    with open(inputFile) as f:
+        data = json.load(f)
+
+    jsonDataSegmentsLen = len(data["segments"])
+
+    # Full data
+    print(data["segments"])
+
+    # Last full data at last index
+    # print(data["segments"][jsonDataSegmentsLen])
+
+    # Words dictionary of last data
+    # print(data["segments"][jsonDataSegmentsLen]["words"])
+    print("\n--// FULL TESTING BELOW //--\n")
+
+    ### IMPORTANT VARS ###
+    indvWordsArr = []
+    indvWordsTSArr = []
+    globalIter = 0
+    tempVidsList = []
+    
+    for i in range(jsonDataSegmentsLen):
+        jsonWordsObj = data["segments"][i]["words"]
+
+        for j in range(len(jsonWordsObj)):
+            try:
+                indvWord = jsonWordsObj[j]["word"]
+                wordStartingTS = jsonWordsObj[j]["start"]
+                wordEndingTS = jsonWordsObj[j]["end"] if j == len(jsonWordsObj) else None
+            except KeyError as e:
+                print(f"Couldn't find key for some reason.")
+
+            indvWordsArr.append(indvWord)
+            indvWordsTSArr.append(wordStartingTS)
+
+            if wordEndingTS != None:
+                indvWordsTSArr.append(wordEndingTS)
+
+    print("\n\nFINAL DATA AFTER LOOPS!\n")
+    print(f"indvWordsArr = {indvWordsArr}")
+    print(f"indvWordsTSArr = {indvWordsTSArr}")
+
+    print(f"\n\n{indvWordsArr[len(indvWordsArr)-1]}")
+
+    std_quotes_to_look_for = []
+    try:
+        std_quotes_to_look_for = loadedIniFile["General"]["std_quotes_to_look_for"].split(",")
+    except Exception as e:
+        print("Error reading configuration file:", str(e))
+        sys.exit(1)
+
+    
+    for i in range(len(std_quotes_to_look_for)):
+        for j in range(len(indvWordsTSArr)):
+            finalCurrentWord = noDiacriticSigns(indvWordsArr[j].lower()) 
+
+            if finalCurrentWord == std_quotes_to_look_for[i]:
+                clipStartingTS = jsonTSSecToUni(indvWordsTSArr[j])
+                try:
+                    clipEndingTS = jsonTSSecToUni(indvWordsTSArr[j+1]) if indvWordsTSArr[j+1] - indvWordsTSArr[j] < 2 else jsonTSSecToUni(indvWordsTSArr[j] + (indvWordsTSArr[j+1] - indvWordsTSArr[j])/4)
+                except IndexError as f:
+                    print("Last index for ending timestamp couldn't be fetched. Resisting to the starting one.")
+                    clipEndingTS = jsonTSSecToUni(indvWordsTSArr[j])
+
+                
+                uniTSOffset = 4
+                clipStartingTS, clipEndingTS = convertAndAdjustTimestamps(clipStartingTS, clipEndingTS, -uniTSOffset, uniTSOffset-uniTSOffset//4)
+                print(f"clipStartingTS = {clipStartingTS}\tclipEndingTS = {clipEndingTS}")
+
+                trimInputClipv3_2(inputVideoFile, "srt__tempvid"+str(i)+"-"+str(globalIter)+".mp4", clipStartingTS, clipEndingTS)
+                tempVidsList.append("srt__tempvid"+str(i)+"-"+str(globalIter)+".mp4")
+
+            globalIter += 1
+
+    if len(tempVidsList) > 1:
+        # Create a text file with the list of video file names
+        with open(TEMP_VIDS_FOLDER+"/filestomerge.txt", "w", encoding="utf-8") as f:
+            for video in tempVidsList:
+                f.write(f"file '{video}'\n")
+
+    concatTrimmedInputs(outputVideoFile)
+
+    # Define the file extension of the temporary files to delete
+    file_extension = GLOBAL_VIDEO_EXT_OUT
+    
+    # Loop through all files in the directory and delete the ones with the specified extension
+    # for filename in os.listdir(TEMP_VIDS_FOLDER):
+        # if filename.endswith(file_extension):
+            # os.remove(os.path.join(TEMP_VIDS_FOLDER+"/", filename))
+
 
 if __name__ == "__main__":
     cliArgs = sys.argv
@@ -243,20 +345,20 @@ if __name__ == "__main__":
               sleep(1)
 
       if len(tempVidsList) > 1:
-        # Create a text file with the list of video file names
-        with open(TEMP_VIDS_FOLDER+"/filestomerge.txt", "w", encoding="utf-8") as f:
-            for video in tempVidsList:
-                f.write(f"file '{video}'\n")
+          # Create a text file with the list of video file names
+          with open(TEMP_VIDS_FOLDER+"/filestomerge.txt", "w", encoding="utf-8") as f:
+              for video in tempVidsList:
+                  f.write(f"file '{video}'\n")
 
-        concatTrimmedInputs(cliArgs[6])
+      concatTrimmedInputs(cliArgs[6])
 
-        # Define the file extension of the temporary files to delete
-        file_extension = GLOBAL_VIDEO_EXT_OUT
-        
-        # Loop through all files in the directory and delete the ones with the specified extension
-        for filename in os.listdir(TEMP_VIDS_FOLDER):
-            if filename.endswith(file_extension):
-                os.remove(os.path.join(TEMP_VIDS_FOLDER+"/", filename))
+      # Define the file extension of the temporary files to delete
+      file_extension = GLOBAL_VIDEO_EXT_OUT
+
+      # Loop through all files in the directory and delete the ones with the specified extension
+      for filename in os.listdir(TEMP_VIDS_FOLDER):
+          if filename.endswith(file_extension):
+              os.remove(os.path.join(TEMP_VIDS_FOLDER+"/", filename))
     elif cliArgs[1] == "stdsummsrt":
           # TODO:
           # DONE - remove unnecessary code sections regarding specifically using LLMs
@@ -282,7 +384,7 @@ if __name__ == "__main__":
           outputVideoFile = cliArgs[4]
       
           srtLastIndex = getSrtSubs(inputFile, 1, 1)[0]
-          srtSubsObj = getSrtSubs(inputFile, 946, 1)[1]
+          srtSubsObj = getSrtSubs(inputFile, 953, 1)[1]
           srtSubsObjLastTS = srtSubsObj[-1][2]
           # Read user-specified words or sentences from the .ini configuration file
           std_quotes_to_look_for = []
@@ -343,3 +445,5 @@ if __name__ == "__main__":
           # sleep(random.randint(2, 5))  # Simulating saving time
       
           print("Video summarization completed!")
+    elif cliArgs[1] == "stdsummjson":
+        main__stdsummjson(cliArgs)
